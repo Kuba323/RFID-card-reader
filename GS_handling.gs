@@ -22,11 +22,11 @@ function doPost(e) {
       flag = 0;
     }
     
-    var sheet = SS.getSheetByName(parsedData.sheet_name); // sheet name to publish data to is specified in Arduino code
-    var dataArr = parsedData.values.split(","); // creates an array of the values to publish 
+    var sheet = SS.getSheetByName(parsedData.sheet_name); 
+    var dataArr = parsedData.values.split(","); 
          
-    var Curr_Date = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy"); // gets the current date
-    var Curr_Time = Utilities.formatDate(new Date(), timezone, "hh:mm:ss a"); // gets the current time
+    var Curr_Date = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy"); 
+    var Curr_Time = Utilities.formatDate(new Date(), timezone, "hh:mm:ss a"); 
 
     // comming from Arduino code
     var value0 = dataArr [0];  // Name - who
@@ -42,16 +42,16 @@ function doPost(e) {
         row_number = i+1;
         time_out = data[i][4] //time out [4]=Column E
         
-        console.log("row number: "+row_number); //print row number
-        console.log("time out: "+time_out); //print row number
-		break; //go outside the loop
+        console.log("row number: "+row_number); 
+        console.log("time out: "+time_out); 
+		break; 
       }
     }
 
     if(row_number > 0){
       if(time_out === "" && value0 !== "Unknown"){
         sheet.getRange("E"+row_number).setValue(Curr_Time);
-        str = "Success"; // string to return back to Arduino serial console
+        str = "Success"; 
         return ContentService.createTextOutput(str);
       }
     }
@@ -60,14 +60,14 @@ function doPost(e) {
       
       case "insert_row":
          
-         sheet.insertRows(2); // insert full row directly below header text
+         sheet.insertRows(2);
          
-         sheet.getRange('A2').setValue(value1);     // publish ID to cell A2
-         sheet.getRange('B2').setValue(value0);     // publish NAME cell B2
-         sheet.getRange('C2').setValue(Curr_Date);  // publish DATE to cell C2
-         sheet.getRange('D2').setValue(Curr_Time);  // publish TIME IN to cell D2
+         sheet.getRange('A2').setValue(value1);     
+         sheet.getRange('B2').setValue(value0);     
+         sheet.getRange('C2').setValue(Curr_Date); 
+         sheet.getRange('D2').setValue(Curr_Time);  
          
-         str = "Success"; // string to return back to Arduino serial console
+         str = "Success"; 
          SpreadsheetApp.flush();
          break;
             
