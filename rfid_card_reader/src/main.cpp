@@ -7,9 +7,8 @@
 #include <ESP8266WiFi.h>
 #include <HTTPSRedirect.h>
 
-
 #define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+#define SCREEN_HEIGHT 32
 #define SCREEN_ADDRESS 0x3C
 
 const char *GScriptId = "AKfycbzTG8Hd2Z5UIwMKzc1C7Xlv9v3ND_DqejSLVImjVMX9O9mdWStqCr-y20YLtvsPjwaj";
@@ -17,7 +16,6 @@ String gate_number = "Gate1";
 
 const char* ssid     = "iPhone (Jakub)";
 const char* password = "xDqwerty54421";
-
 
 String payload_base =  "{\"command\": \"insert_row\", \"sheet_name\": \"Sheet1\", \"values\": ";
 String payload = "";
@@ -37,7 +35,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 MFRC522 rfid(SS_PIN, RST_PIN);
 MFRC522::MIFARE_Key key;
-MFRC522::StatusCode status; //nie wiadomo czy skorzystamy z tego
+MFRC522::StatusCode status; 
 
 struct KeyValue
 {
@@ -45,7 +43,7 @@ struct KeyValue
     String value;
 };
 
-const uint8_t maxItems=5;
+const uint8_t maxItems=8;
 KeyValue KeyValueArray[maxItems];
 String tag;
 
@@ -89,43 +87,41 @@ void setup() {
     attachInterrupt(D1, isr, FALLING);
     timer_a.attach_ms(200, timerCallback);
    
-    //Serial.begin(9600);
     Wire.begin(D3, D10);
     SPI.begin();
     WiFi.begin(ssid, password);
 
-
     rfid.PCD_Init();
     addKeyValuePair("Admin", "19215108245");
-    addKeyValuePair("Person2", "9915516515");
+    addKeyValuePair("Kuba", "9915516515");
+    addKeyValuePair("Konrad", "11964204115");
+    addKeyValuePair("Ania", "2786224115");
 
     if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-	//Serial.println(F("SSD1306 allocation failed"));
-	for(;;);
+    //Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
     }
 
-
-  client = new HTTPSRedirect(httpsPort);
-  client->setInsecure();
-  client->setPrintResponseBody(true);
-  client->setContentTypeHeader("application/json");
+  client = new HTTPSRedirect(httpsPort); // tworzy nowy obiekt klasy do obsługi połączeń po HTTPS
+  client->setInsecure(); // klient nie weryfikuje certyfikatów serwera
+  client->setPrintResponseBody(true); // ustawia opcję "printowania" odpowiedzi
+  client->setContentTypeHeader("application/json"); // ustawia nagłówek Content-Type dla żądania HTTP na "application/json", klient wysyła żądania z oznaczeniem zawartości jako JSON
 
   delay(5000);
 
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(0,10);
+  display.setCursor(10,10);
   display.println("Connecting to ");
-  display.setCursor(0,20);
+  display.setCursor(10,20);
   display.println(host);
   display.display();
 
-
-  // Try to connect for a maximum of 5 times
+  // Próba połączenia 5 razy
   bool flag = false;
-  for(int i=0; i<5; i++){ 
-    int retval = client->connect(host, httpsPort);
+  for(int i=0; i<5; i++){
+    int retval = client->connect(host, httpsPort); // nawiązanie połączenia z serwerem o określonym adresie i porcie HTTPS
 
     if (retval == 1){
       flag = true;
@@ -133,7 +129,7 @@ void setup() {
       display.clearDisplay();
       display.setTextSize(1);
       display.setTextColor(WHITE);
-      display.setCursor(0,20);
+      display.setCursor(10,10);
       display.println("Connected. OK");
       display.display();
       delay(2000);
@@ -144,37 +140,32 @@ void setup() {
       display.clearDisplay();
       display.setTextSize(1);
       display.setTextColor(WHITE);
-      display.setCursor(0,20);
+      display.setCursor(10,0);
       display.println("Connection failed. Retrying...");
       display.display();
 
   }
   }
-  //----------------------------------------------------------
   if (!flag){
-
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(0,0);
+    display.setCursor(0,3);
     display.println("Could not connect to server: ");
-    display.setCursor(0,20);
     display.println(host);
     display.display();
     delay(5000);
     return;
   }
 
-  delete client;    // delete HTTPSRedirect object
-  client = nullptr; // delete HTTPSRedirect object
-
+  delete client;    // usuń obiekt HTTPSRedirect
+  client = nullptr; // wskaźnik null
 
     drawStartPage();
-
 }
 
-void loop() {
 
+void loop() {
   static bool flag = false;
   if (!flag){
     client = new HTTPSRedirect(httpsPort);
@@ -184,24 +175,21 @@ void loop() {
     client->setContentTypeHeader("application/json");
   }
   if (client != nullptr){
-    //when below if condition is TRUE then it takes more time then usual, It means the device 
-    //is disconnected from the google sheet server and it takes time to connect again
-    //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
     if (!client->connected()){
       int retval = client->connect(host, httpsPort);
       if (retval != 1){
         display.clearDisplay();
         display.setTextSize(1);
         display.setTextColor(WHITE);
-        display.setCursor(0,20);
+        display.setCursor(10,10);
         display.println("Disconnected. Retrying...");
         display.display();
 
-        return; //Reset the loop
+        return; //reset pętli
       }
     }
   }
-
     act_time = millis();
     var=0;
  
@@ -215,15 +203,16 @@ void loop() {
         rfid.PCD_StopCrypto1();
     }
 
-    var = check_card(tag);
 
-    //client->POST(url, host, payload);
+    var = check_card(tag);
 
         if(var==1 && (!alarm_flag) && (!service_flag)){
             // alarm_flag = false;
 
+
             // stop_interrupt_flag = false;
             counter =3;
+
 
             digitalWrite(D9, LOW);
             drawWelcomePage(tag);
@@ -232,8 +221,10 @@ void loop() {
             start_time=act_time;
             }
 
+
         if(var==2){
             alarm_flag = false;
+
 
             stop_interrupt_flag = false;
             service_flag = false;
@@ -241,13 +232,13 @@ void loop() {
             counter =3;
             digitalWrite(D9, LOW);
             drawWelcomePage(tag);
-            
+           
             admin_card_flag=true;
             draw_flag=true;
             start_time=act_time;
             }
-            
-    
+           
+   
         if((var==0) && (!alarm_flag)&& (!service_flag)){
             counter--;
             drawWrongPage(counter);
@@ -257,6 +248,7 @@ void loop() {
             if(counter <= 0){
                 alarm_flag=true;
                 }
+
 
         }
         if(admin_button_flag==true && admin_card_flag==true){
@@ -274,23 +266,18 @@ void loop() {
                 draw_flag=false;
                 admin_button_flag=false;
                 admin_card_flag=false;
-            } 
+            }
         }
  
 
         if(alarm_flag==true && stop_interrupt_flag==false){
             drawAlarmPage();
         }
-
-
       if (tag != "") {
         payload = GSpayload(tag);
         client->POST(url, host, payload);
-        tag = "";  // Reset the tag variable
+        tag = "";  // resetuje tag
     }
-
-  //tag="";
-
 }
 
 void addKeyValuePair(String key, String value){
@@ -323,94 +310,105 @@ String getKey(String value){
     return tmp;
 }
 
+
 void drawStartPage(void) {
     display.clearDisplay();
-    display.setTextSize(1);
+    display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(0,20);
-    display.println("WLECOME");
+    display.setCursor(20,15);
+    display.println("WELCOME!");
     display.display();
     delay(1000);
     display.clearDisplay();
+    display.drawRect(15, 10, 94, 19, WHITE);
     display.setTextSize(1);
-    display.setCursor(0,20);
+    display.setCursor(20,15);
     display.println("Scan Your Card");
     display.display();
 }
+
 
 void drawMainPage(void){
     display.clearDisplay();
+    display.drawRect(15, 10, 94, 19, WHITE);
     display.setTextSize(1);
-    display.setCursor(0,20);
+    display.setCursor(20,15);
     display.println("Scan Your Card");
     display.display();
 }
 
+
 void drawWelcomePage(String tag){
-    
+   
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(20,0);
-    display.println("WLECOME");
-    display.setCursor(20,20);
+    display.setCursor(30,0);
+    display.println("WELCOME!");
+    display.setCursor(30,20);
+    display.setTextSize(1);
     display.println(getKey(tag));
     display.display();
 }
 
+
 void drawWrongPage(uint8_t counter){
+
 
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(5,0);
-    display.println("Permission denied");
+    display.setCursor(15,0);
+    display.println("Permission denied.");
     display.setTextSize(1);
-    display.setCursor(0,40);
+    display.setCursor(15,20);
     display.print(counter, DEC);
-    display.print(" attemps left");
+    display.print(" attemps left.");
     display.display();
 }
 
+
 void drawAlarmPage(void){
     display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(0,20);
-    display.println("ALARM!!!!");
+    display.setTextSize(2);
+    display.setCursor(20,15);
+    display.println("ALARM!!!");
     display.display();
 }
+
 
 void drawServicePage(void){
     display.clearDisplay();
     display.setTextSize(1);
-    display.setCursor(0,20);
-    display.println("SERVICE");
+    display.setCursor(20,15);
+    display.println("SERVICE MODE");
     display.display();
 }
 
+
 void timerCallback(){
     if(alarm_flag==true && stop_interrupt_flag==false){
-        digitalWrite(D9, !digitalRead(D9));
+        digitalWrite(D9, !digitalRead(D9)); //przełącza stan pinu D9 między stanem wysokim i niskim
     }
 }
 
 uint8_t check_card(String tag){
     uint8_t check=0;
     for(uint8_t i=0; i<maxItems; i++){
-        if(KeyValueArray[i].value==tag){ 
-            check++; 
+        if(KeyValueArray[i].value==tag){
+            check++;
             if(KeyValueArray[i].key=="Admin") check++;
     }
-
-    
     }
     return check;
 }
+
 
 String values = "";
 
 String GSpayload(String value) {
     String who = "Unknown";  // Ustawiamy wartość domyślną przed pętlą
+
 
     for (uint8_t i = 0; i < maxItems; i++) {
         if (KeyValueArray[i].value == value) {
@@ -419,12 +417,13 @@ String GSpayload(String value) {
         }
     }
 
+
     values = "\"" + who + "," + value + "\"}";
     payload = payload_base + values;
 
+
     return payload;
 }
-
 
 
 void IRAM_ATTR admin_button(){
@@ -434,4 +433,8 @@ void IRAM_ATTR admin_button(){
 void IRAM_ATTR isr(){
     alarm_flag = true;
 }
+
+
+
+
 
