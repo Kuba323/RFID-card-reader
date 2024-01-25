@@ -28,19 +28,19 @@ function doPost(e) {
     var Curr_Date = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy"); 
     var Curr_Time = Utilities.formatDate(new Date(), timezone, "hh:mm:ss a"); 
 
-    // comming from Arduino code
-    var value0 = dataArr [0];  // Name - who
-    var value1 = dataArr [1];  // ID - value
+
+    var value0 = dataArr [0];
+    var value1 = dataArr [1];  
 
   
     var data = sheet.getDataRange().getValues();
     var row_number = 0;
     var time_out = "";
 
-    for(var i = 0; i < data.length ; i++){  // Search first occurrence of student id
-      if(data[i][0] == value1){ //data[i][0] i.e. [0]=Column A, Student_id
+    for(var i = 0; i < data.length ; i++){  
+      if(data[i][0] == value1){ 
         row_number = i+1;
-        time_out = data[i][4] //time out [4]=Column E
+        time_out = data[i][4] 
         
         console.log("row number: "+row_number); 
         console.log("time out: "+time_out); 
